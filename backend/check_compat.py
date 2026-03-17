@@ -1,14 +1,10 @@
 """
-本机兼容性检测：Python、CPU、Paddle/PaddleOCR 是否可用。
+本机兼容性检测：Python、百度 OCR 配置等。
 在 backend 目录下运行: python check_compat.py
 """
 import os
 import platform
 import sys
-
-# 与 main 一致：推理前关闭 oneDNN，避免 ConvertPirAttribute2RuntimeAttribute 等错误
-os.environ["PADDLE_PDX_EAGER_INIT"] = os.environ.get("PADDLE_PDX_EAGER_INIT", "0")
-os.environ["FLAGS_use_mkldnn"] = os.environ.get("FLAGS_use_mkldnn", "0")
 
 def main():
     print("=" * 60)
@@ -33,40 +29,21 @@ def main():
     except ImportError:
         print(f"  CPU: {platform.processor() or 'N/A'} (安装 py-cpuinfo 可显示更详细)")
 
-    # Paddle
-    print("\n[PaddlePaddle]")
+    # OCR 引擎（Paddle 已移除，仅 baidu / mock）
+    print("\n[OCR 引擎]")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     try:
-        import paddle
-        print(f"  版本: {paddle.__version__}")
-        print("  导入: 成功")
+        from config import DOCUMENTS_OCR_ENGINE, DOCUMENTS_BAIDU_TABLE_API_KEY
+        print(f"  当前: DOCUMENTS_OCR_ENGINE={DOCUMENTS_OCR_ENGINE}")
+        if DOCUMENTS_OCR_ENGINE == "baidu":
+            key_pre = (DOCUMENTS_BAIDU_TABLE_API_KEY or "").strip()[:20]
+            print(f"  百度 API Key: {'已配置' if key_pre else '未配置'} ({key_pre}...)")
+        print("  Paddle: 已移除，无需安装")
     except Exception as e:
-        print(f"  导入失败: {e}")
-        print("  请安装: pip install paddlepaddle")
-        return
-
-    # PaddleOCR
-    print("\n[PaddleOCR]")
-    try:
-        import paddleocr
-        v = getattr(paddleocr, "__version__", "未知")
-        print(f"  版本: {v}")
-        print("  导入: 成功")
-    except Exception as e:
-        print(f"  导入失败: {e}")
-        print("  请安装: pip install paddleocr")
-        return
-
-    # 可选：轻量推理测试（不加载 PP-Structure 大模型，仅验证环境）
-    print("\n[推理环境]")
-    try:
-        import paddle
-        paddle.utils.run_check()
-        print("  run_check(): 通过")
-    except Exception as e:
-        print(f"  run_check(): {e}")
+        print(f"  加载 config: {e}")
 
     print("\n" + "=" * 60)
-    print("检测完成。若上述无报错，本机可运行票据识别后端。")
+    print("检测完成。本机可运行票据识别后端（百度 / mock）。")
     print("启动方式: 在 backend 目录执行 .\\run.ps1 或 run.bat")
     print("=" * 60)
 

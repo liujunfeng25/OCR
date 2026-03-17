@@ -134,15 +134,8 @@ def _run_recognize(image_path: Path) -> tuple[dict, str]:
             logger.exception("百度表格识别失败: %s", e)
             raise
     elif DOCUMENTS_OCR_ENGINE == "paddle":
-        try:
-            from app.services.ocr_service import run_paddle_ocr
-            structured = run_paddle_ocr(image_path)
-        except ImportError as e:
-            logger.warning("PaddleOCR 未安装或不可用，使用 mock: %s", e)
-            structured = _mock_ocr(image_path)
-        except Exception as e:
-            logger.exception("PaddleOCR 识别失败: %s", e)
-            raise
+        logger.warning("Paddle 已移除，使用 mock 占位。请设置 DOCUMENTS_OCR_ENGINE=baidu 使用百度识别。")
+        structured = _mock_ocr(image_path)
     else:
         structured = _mock_ocr(image_path)
     html_snippet = _structured_to_html(structured)

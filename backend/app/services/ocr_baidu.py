@@ -54,7 +54,7 @@ def _table_result_to_structured(table: dict) -> dict:
 
 def run_baidu_table_ocr(image_path: Path) -> dict:
     """
-    调用百度表格识别 API（仅此一个接口），返回与 run_paddle_ocr 一致的结构：
+    调用百度表格识别 API（仅此一个接口），返回与前端一致的 structured 结构：
     { "tables": [ { "headers": [...], "rows": [[...], ...] } ], "key_values": [] }
     """
     if not DOCUMENTS_BAIDU_TABLE_API_KEY or not DOCUMENTS_BAIDU_TABLE_API_KEY.strip():

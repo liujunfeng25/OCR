@@ -41,8 +41,8 @@ puaojuchuli/
 docker compose up -d --build
 ```
 
-- **前端**：浏览器访问 http://localhost:8080
-- **后端**：接口文档 http://localhost:8080/api/doc（经前端 nginx 代理到后端）
+- **前端**：浏览器访问 http://localhost:8081（端口以 docker-compose.yml 为准）
+- **后端**：经前端 nginx 代理到后端，接口文档见前端同端口 `/docs` 或直连 backend:8010
 - 默认使用 **百度表格识别**（`DOCUMENTS_OCR_ENGINE=baidu`），需在 `docker-compose.yml` 或环境中配置 `DOCUMENTS_BAIDU_TABLE_API_KEY`
 - 上传文件持久化在 volume `backend_uploads`
 - 使用百度 OCR 时，可在 `docker-compose.yml` 的 `backend` 下增加环境变量 `DOCUMENTS_BAIDU_TABLE_API_KEY`（或使用 `.env` 文件）
@@ -53,7 +53,7 @@ docker compose up -d --build
 
 ### 1. 后端
 
-**推荐（Windows）**：用脚本启动，自动设置 Paddle 相关环境变量，避免 PDX/oneDNN 报错：
+**推荐（Windows）**：用脚本启动：
 
 ```powershell
 cd backend
@@ -68,12 +68,10 @@ pip install -r requirements.txt
 ```bash
 cd backend
 pip install -r requirements.txt
-# Windows PowerShell 建议先执行：$env:PADDLE_PDX_EAGER_INIT="0"; $env:FLAGS_use_mkldnn="0"
 uvicorn main:app --host 127.0.0.1 --port 8010
 ```
 
-- **OCR**：默认使用 **PaddleOCR**（PP-StructureV3 表格+版面分析），针对中文三联单优化。首次识别会自动下载模型（约 1.x GB），需联网。代码中已设置 `enable_mkldnn=False`，兼容 Paddle 3.3 的 CPU 推理。
-- 若未安装 PaddleOCR 或需联调，可在 `config.py` 中设置 `DOCUMENTS_OCR_ENGINE = "mock"` 使用占位数据。
+- **OCR**：默认使用 **百度表格识别**（`DOCUMENTS_OCR_ENGINE=baidu`），需配置 `DOCUMENTS_BAIDU_TABLE_API_KEY`。联调时可设为 `mock` 使用占位数据。
 - 本机兼容性检测：`python check_compat.py`
 - 接口文档：http://127.0.0.1:8010/docs
 
@@ -96,11 +94,10 @@ npm run dev
 
 - `DOCUMENTS_UPLOAD_DIR`：上传文件保存目录
 - `DOCUMENTS_PREPROCESS_ENABLED`：是否启用图像预处理（预留）
-- `DOCUMENTS_OCR_ENGINE`：`paddle` 真实识别（默认）/ `mock` 占位联调
+- `DOCUMENTS_OCR_ENGINE`：`baidu` 百度表格识别（默认）/ `mock` 占位联调
 
 ## 后续扩展
 
-- 接入真实 OCR（如 PaddleOCR）与表格识别
 - 图像预处理（去模糊、透视校正）
 - 异步任务与轮询（长耗时识别）
 - 接入 ai-agent 时，将此前端与后端模块按原方案挂到 ai-agent 路由与菜单即可

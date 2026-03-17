@@ -1,10 +1,3 @@
-# 必须在任何 import 前设置，避免 PaddleX 在 import 时执行 repo_manager.initialize()
-# 否则 PPStructureV3 内部再次 initialize 会报 "PDX has already been initialized"
-import os
-os.environ["PADDLE_PDX_EAGER_INIT"] = os.environ.get("PADDLE_PDX_EAGER_INIT", "0")
-# 关闭 oneDNN/MKLDNN，避免 ConvertPirAttribute2RuntimeAttribute 等未实现错误
-os.environ["FLAGS_use_mkldnn"] = os.environ.get("FLAGS_use_mkldnn", "0")
-
 import logging
 import sys
 import traceback

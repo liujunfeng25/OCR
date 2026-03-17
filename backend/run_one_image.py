@@ -1,16 +1,10 @@
 """
 命令行单图识别：在 backend 目录执行
   python run_one_image.py <图片路径>
-会打印进度（每 15 秒）和最终识别结果，便于本地测试。
+使用 config.DOCUMENTS_OCR_ENGINE（默认 baidu），打印识别结果，便于本地测试。
 """
-import os
 import sys
-import threading
 from pathlib import Path
-
-# 与 main 一致，必须在 import paddle 相关前设置
-os.environ["PADDLE_PDX_EAGER_INIT"] = os.environ.get("PADDLE_PDX_EAGER_INIT", "0")
-os.environ["FLAGS_use_mkldnn"] = os.environ.get("FLAGS_use_mkldnn", "0")
 
 _backend_dir = Path(__file__).resolve().parent
 if str(_backend_dir) not in sys.path:
@@ -27,37 +21,24 @@ def main():
         print(f"错误: 文件不存在: {image_path}")
         sys.exit(2)
 
-    result_holder = []
-    exc_holder = []
-    stop_progress = threading.Event()
+    from config import DOCUMENTS_OCR_ENGINE
 
-    def run_ocr():
+    if DOCUMENTS_OCR_ENGINE == "baidu":
         try:
-            from app.services.ocr_service import run_paddle_ocr
-            out = run_paddle_ocr(image_path)
-            result_holder.append(out)
+            from app.services.ocr_baidu import run_baidu_table_ocr
+            data = run_baidu_table_ocr(image_path)
         except Exception as e:
-            exc_holder.append(e)
-        finally:
-            stop_progress.set()
+            print("百度识别失败:", e)
+            sys.exit(3)
+    else:
+        from app.routers.documents import _mock_ocr
+        data = _mock_ocr(image_path)
 
-    print("正在加载模型并识别（首次约 1～3 分钟）…")
-    print("-" * 50)
-    th = threading.Thread(target=run_ocr)
-    th.start()
-    elapsed = 0
-    while not stop_progress.wait(timeout=15):
-        elapsed += 15
-        print(f"  [进度] 识别进行中… 已用时 {elapsed} 秒")
-    th.join()
-    if exc_holder:
-        print("识别失败:", exc_holder[0])
-        sys.exit(3)
-    data = result_holder[0]
     tables = data.get("tables") or []
     key_vals = data.get("key_values") or []
     print("-" * 50)
     print("识别完成。")
+    print(f"  引擎: {DOCUMENTS_OCR_ENGINE}")
     print(f"  表格数: {len(tables)}")
     print(f"  键值对数: {len(key_vals)}")
     if key_vals:
