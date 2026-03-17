@@ -29,8 +29,25 @@ puaojuchuli/
 │       ├── api/request.js、api/documents.js
 │       └── views/Documents.vue
 ├── data/documents/uploads/  # 上传图片存储（自动创建）
+├── docker-compose.yml      # Docker 一键运行（项目名 OCR）
 └── README.md
 ```
+
+## Docker 一键运行（推荐）
+
+项目已配置 Docker Compose，项目名为 **OCR**。在仓库根目录执行：
+
+```bash
+docker compose up -d --build
+```
+
+- **前端**：浏览器访问 http://localhost:8080
+- **后端**：接口文档 http://localhost:8080/api/doc（经前端 nginx 代理到后端）
+- 默认使用 **百度表格识别**（`DOCUMENTS_OCR_ENGINE=baidu`），需在 `docker-compose.yml` 或环境中配置 `DOCUMENTS_BAIDU_TABLE_API_KEY`
+- 上传文件持久化在 volume `backend_uploads`
+- 使用百度 OCR 时，可在 `docker-compose.yml` 的 `backend` 下增加环境变量 `DOCUMENTS_BAIDU_TABLE_API_KEY`（或使用 `.env` 文件）
+
+停止：`docker compose down`
 
 ## 运行方式
 

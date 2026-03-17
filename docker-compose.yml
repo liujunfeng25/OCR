@@ -1,0 +1,34 @@
+# 项目名：OCR，一键运行前后端
+name: OCR
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ocr-backend
+    container_name: ocr-backend
+    environment:
+      - DOCUMENTS_OCR_ENGINE=baidu
+      - PADDLE_PDX_EAGER_INIT=0
+      - FLAGS_use_mkldnn=0
+    volumes:
+      - backend_uploads:/app/data/documents/uploads
+    expose:
+      - "8010"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ocr-frontend
+    container_name: ocr-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_uploads:
