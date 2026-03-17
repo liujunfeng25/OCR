@@ -178,14 +178,15 @@ def _compare_docs(doc_a: dict, doc_b: dict, match_key: str, compare_fields: List
     all_keys = sorted(set(key_to_a) | set(key_to_b))
     matches = []
     diffs: List[CompareItem] = []
+    # 每条 match 均带 row_* 与 headers_*，供前端「仅 A 有 / 仅 B 有」键值表格展示，勿删。
     for key in all_keys:
         ra = key_to_a.get(key)
         rb = key_to_b.get(key)
         if not ra:
-            matches.append({"key": key, "in_a": False, "in_b": True, "row_b": rb["row"] if rb else []})
+            matches.append({"key": key, "in_a": False, "in_b": True, "row_b": rb["row"] if rb else [], "headers_b": rb["headers"] if rb else []})
             continue
         if not rb:
-            matches.append({"key": key, "in_a": True, "in_b": False, "row_a": ra["row"]})
+            matches.append({"key": key, "in_a": True, "in_b": False, "row_a": ra["row"], "headers_a": ra["headers"]})
             continue
         headers = ra["headers"]
         for field in compare_fields:
@@ -196,7 +197,7 @@ def _compare_docs(doc_a: dict, doc_b: dict, match_key: str, compare_fields: List
             vb = rb["row"][idx] if idx < len(rb["row"]) else ""
             if str(va).strip() != str(vb).strip():
                 diffs.append(CompareItem(key=key, field=field, value_a=va, value_b=vb, match=False))
-        matches.append({"key": key, "in_a": True, "in_b": True, "row_a": ra["row"], "row_b": rb["row"]})
+        matches.append({"key": key, "in_a": True, "in_b": True, "row_a": ra["row"], "row_b": rb["row"], "headers_a": ra["headers"], "headers_b": rb["headers"]})
 
     summary = {"total_keys": len(all_keys), "diff_count": len(diffs), "only_in_a": sum(1 for m in matches if m.get("in_a") and not m.get("in_b")), "only_in_b": sum(1 for m in matches if m.get("in_b") and not m.get("in_a"))}
     return CompareResponse(matches=matches, diffs=diffs, summary=summary)

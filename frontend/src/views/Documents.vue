@@ -190,7 +190,7 @@
               <el-descriptions-item label="仅 A 有">仅发货单有: {{ compareResult.summary?.only_in_a ?? '-' }}</el-descriptions-item>
               <el-descriptions-item label="仅 B 有">仅收货单有: {{ compareResult.summary?.only_in_b ?? '-' }}</el-descriptions-item>
             </el-descriptions>
-            <h4 style="margin-top: 16px">差异明细</h4>
+            <h4 style="margin-top: 16px">差异明细（同一品名下单据 A/B 字段值不一致）</h4>
             <el-table :data="compareResult.diffs" border size="small">
               <el-table-column prop="key" label="品名/键" width="120" />
               <el-table-column prop="field" label="字段" width="80" />
@@ -204,6 +204,16 @@
                 </template>
               </el-table-column>
             </el-table>
+            <template v-if="onlyInA.length || onlyInB.length">
+              <h4 style="margin-top: 16px">仅发货单有（收货单无）</h4>
+              <el-table :data="onlyInARows" border size="small" style="margin-bottom: 16px">
+                <el-table-column v-for="h in onlyInAHeaders" :key="h" :prop="h" :label="h" min-width="80" show-overflow-tooltip />
+              </el-table>
+              <h4 style="margin-top: 16px">仅收货单有（发货单无）</h4>
+              <el-table :data="onlyInBRows" border size="small">
+                <el-table-column v-for="h in onlyInBHeaders" :key="h" :prop="h" :label="h" min-width="80" show-overflow-tooltip />
+              </el-table>
+            </template>
           </div>
         </el-card>
       </el-tab-pane>
@@ -305,6 +315,57 @@ const progressA = ref('')
 const progressB = ref('')
 const comparing = ref(false)
 const compareResult = ref(null)
+
+const onlyInA = computed(() => {
+  const matches = compareResult.value?.matches || []
+  return matches
+    .filter(m => (m.in_a ?? m.inA) && !(m.in_b ?? m.inB))
+    .map(m => ({ key: m.key, row: m.row_a ?? m.rowA ?? [], headers: m.headers_a ?? m.headersA ?? [] }))
+})
+const onlyInB = computed(() => {
+  const matches = compareResult.value?.matches || []
+  return matches
+    .filter(m => (m.in_b ?? m.inB) && !(m.in_a ?? m.inA))
+    .map(m => ({ key: m.key, row: m.row_b ?? m.rowB ?? [], headers: m.headers_b ?? m.headersB ?? [] }))
+})
+const onlyInAHeaders = computed(() => {
+  const fromMatch = onlyInA.value[0]?.headers
+  if (fromMatch?.length) return fromMatch
+  const fromDoc = docA.value?.tables?.[0]?.headers
+  if (fromDoc?.length) return fromDoc
+  return ['品名/键']
+})
+const onlyInBHeaders = computed(() => {
+  const fromMatch = onlyInB.value[0]?.headers
+  if (fromMatch?.length) return fromMatch
+  const fromDoc = docB.value?.tables?.[0]?.headers
+  if (fromDoc?.length) return fromDoc
+  return ['品名/键']
+})
+const onlyInARows = computed(() => {
+  const headers = onlyInAHeaders.value
+  if (!headers.length) return onlyInA.value.map(m => ({ '品名/键': m.key }))
+  return onlyInA.value.map(m => {
+    const row = m.row || []
+    const obj = {}
+    headers.forEach((h, i) => {
+      obj[h] = (headers.length === 1 && h === '品名/键') ? m.key : (row[i] ?? '')
+    })
+    return obj
+  })
+})
+const onlyInBRows = computed(() => {
+  const headers = onlyInBHeaders.value
+  if (!headers.length) return onlyInB.value.map(m => ({ '品名/键': m.key }))
+  return onlyInB.value.map(m => {
+    const row = m.row || []
+    const obj = {}
+    headers.forEach((h, i) => {
+      obj[h] = (headers.length === 1 && h === '品名/键') ? m.key : (row[i] ?? '')
+    })
+    return obj
+  })
+})
 
 function onCompareFileChange(file, which) {
   const f = file?.raw
